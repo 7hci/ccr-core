@@ -28,6 +28,8 @@ object EventBus {
     interface Event
 }
 
+class ErrorEvent(val text: String) : EventBus.Event
+
 class GenericErrorEvent : EventBus.Event
 
 class LanguageChangedEvent : EventBus.Event

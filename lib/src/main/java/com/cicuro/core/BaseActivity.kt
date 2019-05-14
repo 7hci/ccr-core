@@ -88,7 +88,7 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
         showAlert(title, message)
     }
 
-    private fun showAlert(title: String, message: String) {
+    protected fun showAlert(title: String, message: String) {
         val okText = cicuroContext.i18n.t("ok")
         AlertDialog.Builder(this)
             .setTitle(title)
