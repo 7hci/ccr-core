@@ -14,9 +14,9 @@ import com.cicuro.core.models.LoginResult
 import com.cicuro.core.models.RequestHeaders
 import com.cicuro.core.utils.disposeWith
 import com.cicuro.core.utils.getFile
-import com.cicuro.core.utils.getI18Next
 import com.cicuro.core.utils.readData
 import com.github.florent37.runtimepermission.kotlin.askPermission
+import com.i18next.android.I18Next
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import timber.log.Timber
@@ -26,6 +26,7 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
     abstract val fragmentHolderId: Int
     abstract val statusBarColorId: Int
     abstract val defaultFragment: Fragment
+    abstract val translationsResourceMap: Map<String, Int>
 
     var enterAnimation: Int = android.R.anim.fade_in
     var exitAnimation: Int = android.R.anim.fade_out
@@ -46,6 +47,7 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
                 val loginResult = readData<LoginResult>(getFile(LOGIN_RESULT_FILENAME))
 
                 cicuroContext = createCicuroContext(config, enrollmentInfo, requestHeaders, loginResult)
+                configureI18Next(translationsResourceMap, loginResult?.language)
 
                 SentryTree.initializeSentry(config?.sentryDSN, enrollmentInfo?.id, loginResult)
 
@@ -80,11 +82,17 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        val loginResult = readData<LoginResult>(getFile(LOGIN_RESULT_FILENAME))
-        if (loginResult?.language != cicuroContext.loginResult?.language) {
-            cicuroContext.loginResult = loginResult
-            cicuroContext.i18n = getI18Next(cicuroContext.translationsResourceMap, loginResult?.language ?: "en")
-            EventBus.post(LanguageChangedEvent())
+        // The first time the app runs after being installed, this will fail
+        // because permissions have not been granted
+        try {
+            val loginResult = readData<LoginResult>(getFile(LOGIN_RESULT_FILENAME))
+            if (loginResult?.language != cicuroContext.loginResult?.language) {
+                cicuroContext.loginResult = loginResult
+                I18Next.getInstance().options.language = loginResult?.language ?: "en"
+                EventBus.post(LanguageChangedEvent())
+            }
+        } catch (e: Throwable) {
+            // Do nothing
         }
     }
 
@@ -93,14 +101,33 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
         disposable.clear()
     }
 
+    private fun configureI18Next(resourceMap: Map<String, Int>, language: String?) {
+        val i18n = I18Next.getInstance()
+        i18n.options.language = language ?: "en"
+        i18n.options.defaultNamespace = "translation"
+        i18n.options.keySeparator = "."
+        i18n.options.nsSeparator = ":"
+        i18n.options.interpolationPrefix = "{{"
+        i18n.options.interpolationSuffix = "}}"
+
+        for (entry in resourceMap.entries) {
+            i18n.loader()
+                .namespace("translation")
+                .lang(entry.key)
+                .from(BaseApplication.getContext(), entry.value)
+                .load()
+        }
+    }
+
+
     private fun showServerErrorAlert() {
-        val title = cicuroContext.i18n.t("server_error_title")
-        val message = cicuroContext.i18n.t("server_error_message")
+        val title = I18Next.getInstance().t("server_error_title")
+        val message = I18Next.getInstance().t("server_error_message")
         showAlert(title, message)
     }
 
     protected fun showAlert(title: String, message: String) {
-        val okText = cicuroContext.i18n.t("ok")
+        val okText = I18Next.getInstance().t("ok")
         AlertDialog.Builder(this)
             .setTitle(title)
             .setMessage(message)
