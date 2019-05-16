@@ -13,6 +13,6 @@ abstract class BaseContext {
     abstract var loginResult: LoginResult?
     abstract val translationsResourceMap: Map<String, Int>
 
-    val i18n
-        get() = getI18Next(translationsResourceMap, loginResult?.language ?: "en")
+    var i18n = getI18Next(mapOf(), "en")
+      get() = getI18Next(translationsResourceMap, loginResult?.language ?: "en")
 }

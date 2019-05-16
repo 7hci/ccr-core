@@ -28,10 +28,6 @@ private class ItemClicksObservable<T : IItem<*, *>>(
         adapter.withOnClickListener(listener)
     }
 
-//  override fun subscribeActual(observer: Observer<in Unit>) {
-
-//  }
-
     private class Listener<T : IItem<*, *>>(
         private val adapter: FastItemAdapter<*>,
         private val observer: Observer<in T>
@@ -64,7 +60,7 @@ class GridItemOffsetDecoration(
         val isFirstColumn = column == 1
         val row = Math.ceil((position + 1.0) / colSpan).toInt()
         val totalItems = parent.layoutManager?.itemCount ?: 0
-        val isLastRow = Math.ceil((totalItems / colSpan).toDouble()).toInt() == row
+        val isLastRow = Math.ceil(((totalItems * 1.0) / colSpan)).toInt() == row
         val isFirstRow = row == 1
 
         rect.left = if (isFirstColumn) offset * 2 else offset

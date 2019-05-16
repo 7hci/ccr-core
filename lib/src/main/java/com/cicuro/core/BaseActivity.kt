@@ -14,6 +14,7 @@ import com.cicuro.core.models.LoginResult
 import com.cicuro.core.models.RequestHeaders
 import com.cicuro.core.utils.disposeWith
 import com.cicuro.core.utils.getFile
+import com.cicuro.core.utils.getI18Next
 import com.cicuro.core.utils.readData
 import com.github.florent37.runtimepermission.kotlin.askPermission
 import io.reactivex.disposables.CompositeDisposable
@@ -76,6 +77,16 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
         requestHeaders: RequestHeaders?,
         loginResult: LoginResult?
     ): T
+
+    override fun onStart() {
+        super.onStart()
+        val loginResult = readData<LoginResult>(getFile(LOGIN_RESULT_FILENAME))
+        if (loginResult?.language != cicuroContext.loginResult?.language) {
+            cicuroContext.loginResult = loginResult
+            cicuroContext.i18n = getI18Next(cicuroContext.translationsResourceMap, loginResult?.language ?: "en")
+            EventBus.post(LanguageChangedEvent())
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
