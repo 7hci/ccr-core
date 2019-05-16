@@ -26,10 +26,10 @@ abstract class BaseFragment<T, U : BaseContext> : Fragment() {
         presenter.bind(this as T, (activity as BaseActivity<*>).cicuroContext as U)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onDestroyView() {
         presenter.unbind()
         disposable.clear()
+        super.onDestroyView()
     }
 
     fun Disposable.disposeOnDestroy(): Disposable = apply {
