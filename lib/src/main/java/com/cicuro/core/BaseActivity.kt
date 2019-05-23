@@ -17,6 +17,7 @@ import com.cicuro.core.utils.getFile
 import com.cicuro.core.utils.readData
 import com.github.florent37.runtimepermission.kotlin.askPermission
 import com.i18next.android.I18Next
+import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
 import timber.log.Timber
@@ -37,7 +38,12 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        EventBus.register<GenericErrorEvent>().subscribe { showServerErrorAlert() }.disposeOnDestroy()
+        EventBus.register<GenericErrorEvent>()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe({
+                showServerErrorAlert()
+            }, Timber::e)
+            .disposeOnDestroy()
 
         askPermission(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE) {
             try {
