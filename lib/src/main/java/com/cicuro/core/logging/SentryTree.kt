@@ -24,14 +24,17 @@ class SentryTree : Timber.Tree() {
     companion object {
         private const val SERIAL = "SERIAL"
         private const val DEVICE_ID = "SERIAL"
+        private const val PACKAGE_NAME = "PACKAGE_NAME"
 
         fun initializeSentry(
             sentryDSN: String?,
+            packageName: String,
             deviceId: Int?,
             loginResult: LoginResult?
         ) {
             val client = SentryClientFactory.sentryClient(sentryDSN)
             client.tags = hashMapOf<String, String>(
+                PACKAGE_NAME to packageName,
                 SERIAL to Build.SERIAL,
                 DEVICE_ID to deviceId.toString()
             )

@@ -55,7 +55,12 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
                 cicuroContext = createCicuroContext(config, enrollmentInfo, requestHeaders, loginResult)
                 configureI18Next(translationsResourceMap, loginResult?.language)
 
-                SentryTree.initializeSentry(config?.sentryDSN, enrollmentInfo?.id, loginResult)
+                SentryTree.initializeSentry(
+                    config?.sentryDSN,
+                    applicationContext.applicationInfo.packageName,
+                    enrollmentInfo?.id,
+                    loginResult
+                )
 
                 setContentView(layoutId)
 
