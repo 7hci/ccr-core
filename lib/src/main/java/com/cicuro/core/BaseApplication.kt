@@ -1,26 +1,36 @@
 package com.cicuro.core
 
 import android.app.Application
-import android.content.Context
 import com.cicuro.core.logging.SentryTree
+import com.cicuro.core.models.LoginResult
 import timber.log.Timber
 
-abstract class BaseApplication : Application() {
-    abstract val isDebug: Boolean
+abstract class BaseApplication : Application(){
+  abstract val isDebug: Boolean
+  abstract val applicationId: String
+  abstract val versionName: String
 
-    override fun onCreate() {
-        super.onCreate()
-        application = this
+  private var sentryTree: SentryTree? = null
 
-        if (isDebug) {
-            Timber.plant(Timber.DebugTree())
-        } else {
-            Timber.plant(SentryTree())
-        }
+  override fun onCreate() {
+    super.onCreate()
+    application = this
+
+    if (isDebug) {
+      Timber.plant(Timber.DebugTree())
+    } else {
+      sentryTree = SentryTree(applicationId, versionName)
+      Timber.plant()
     }
+  }
 
-    companion object {
-        var application: Application? = null
-        fun getContext(): Context? = application?.applicationContext
-    }
+  fun initializeSentry(
+    sentryDsn: String?,
+    deviceId: Int?,
+    loginResult: LoginResult?
+  ) = sentryTree?.initializeSentry(applicationContext, sentryDsn, deviceId, loginResult)
+
+  companion object {
+    var application: Application? = null
+  }
 }

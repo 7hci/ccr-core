@@ -6,33 +6,47 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import com.cicuro.core.utils.disposeWith
+import io.reactivex.Flowable
 import io.reactivex.disposables.CompositeDisposable
 import io.reactivex.disposables.Disposable
+import io.reactivex.processors.FlowableProcessor
+import io.reactivex.processors.PublishProcessor
 
-abstract class BaseFragment<T, U : BaseContext> : Fragment() {
-    abstract val layoutId: Int
-    abstract val presenter: BasePresenter<T, U>
+abstract class BaseFragment <C: BaseContext, M> : Fragment() {
+  protected abstract val layoutId: Int
+  private val disposable: CompositeDisposable = CompositeDisposable()
+  private val actionsSource: FlowableProcessor<BaseAction> = PublishProcessor.create()
+  private lateinit var presenter: BasePresenter<C, M>
 
-    private val disposable = CompositeDisposable()
+  protected abstract fun getPresenter(): BasePresenter<C, M>
 
-    abstract fun onInitializeView(state: Bundle?)
+  protected abstract fun onInitialize(
+    state: Flowable<M>,
+    actionsSource: FlowableProcessor<BaseAction>,
+    savedInstanceState: Bundle?
+  )
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, state: Bundle?): View? =
-        inflater.inflate(layoutId, container, false)
+  override fun onCreateView(
+    inflater: LayoutInflater,
+    container: ViewGroup?,
+    savedInstanceState: Bundle?
+  ): View? = inflater.inflate(layoutId, container, false)
 
-    override fun onViewCreated(view: View, state: Bundle?) {
-        super.onViewCreated(view, state)
-        onInitializeView(state)
-        presenter.bind(this as T, (activity as BaseActivity<*>).cicuroContext as U)
-    }
+  override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+    super.onViewCreated(view, savedInstanceState)
+    val ctx: C = (activity as BaseActivity<*>).cicuroContext as C
+    presenter = getPresenter()
+    presenter.initialize(ctx, actionsSource.onBackpressureBuffer())
+    onInitialize(presenter.getState(), actionsSource, savedInstanceState)
+  }
 
-    override fun onDestroyView() {
-        presenter.unbind()
-        disposable.clear()
-        super.onDestroyView()
-    }
+  override fun onDestroyView() {
+    presenter.destroy()
+    disposable.clear()
+    super.onDestroyView()
+  }
 
-    fun Disposable.disposeOnDestroy(): Disposable = apply {
-        this.disposeWith(disposable)
-    }
+  fun Disposable.disposeOnDestroy(): Disposable = apply {
+    this.disposeWith(disposable)
+  }
 }
