@@ -45,7 +45,7 @@ abstract class BaseActivity<T : BaseContext> : AppCompatActivity() {
             }, Timber::e)
             .disposeOnDestroy()
 
-        askPermission(READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE) {
+        askPermission(WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE) {
             try {
                 val config = readData<Config>(getFile(CONFIG_FILENAME))
                 val enrollmentInfo = readData<EnrollmentInfo>(getFile(ENROLLMENT_FILENAME))
